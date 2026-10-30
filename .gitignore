@@ -19,3 +19,8 @@ target/
 /.codex/
 /src/.codex/config.toml
 /ghostlock *
+
+# Signing material
+*.p12
+*.pfx
+signing.properties
