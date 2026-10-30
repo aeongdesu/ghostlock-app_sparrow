@@ -40,7 +40,7 @@ namespace ghostlock::binary_profile {
 
 #define PLAIN(key, member)                                                       \
     {                                                                            \
-        key, [](const profile::kernel_offsets &o) { return true; },              \
+        key, [](const profile::kernel_offsets &) { return true; },              \
                 [](const profile::kernel_offsets &o) { return to_raw(o.member); },\
                 [](profile::kernel_offsets &o, uint64_t r) {                    \
                     o.member = from_raw<decltype(o.member)>(r);                 \

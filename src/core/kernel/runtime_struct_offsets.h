@@ -19,6 +19,20 @@ namespace ghostlock::profile {
                                  fallback);
     }
 
+    /* Defined in support/util.cpp: logging lives there, and this header is
+     * included from common.h before the logging macros are available. */
+    [[noreturn]] void fatal_missing_task_offset(const char *name);
+
+    /* A missing value used to fall back to the 6.6 layout, which writes the
+     * wrong field on this 5.10 image. Fail closed instead. */
+    template<typename F>
+    inline uint32_t require_task_offset(F get, const char *name) {
+        const kernel_offsets *values = ghostlock::session::g_exploit_session.profile.values();
+        const uint32_t value = values ? static_cast<uint32_t>(get(*values)) : 0;
+        if (value == 0) fatal_missing_task_offset(name);
+        return value;
+    }
+
     template<typename F>
     inline uint64_t symbol_image(F get, uint64_t fallback) {
         return ghostlock::kernel::KIMAGE_TEXT_BASE +
@@ -103,72 +117,53 @@ namespace ghostlock::profile {
     }
 
     inline uint32_t fake_task_prio_off() {
-        return symbol_u32([](const kernel_offsets &v) { return v.task.prio; }, 0x94);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.prio; }, "prio");
     }
 
     inline uint32_t fake_task_normal_prio_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.normal_prio; }, 0x9C);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.normal_prio; }, "normal_prio");
     }
 
     inline uint32_t fake_task_task_group_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.sched_task_group; }, 0x420);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.sched_task_group; }, "sched_task_group");
     }
 
     inline uint32_t fake_task_pi_lock_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.pi_lock; }, 0x9EC);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.pi_lock; }, "pi_lock");
     }
 
     inline uint32_t fake_task_pi_waiters_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.pi_waiters; }, 0xA00);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.pi_waiters; }, "pi_waiters");
     }
 
     inline uint32_t fake_task_pi_top_task_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.pi_top_task; }, 0xA10);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.pi_top_task; }, "pi_top_task");
     }
 
     inline uint32_t fake_task_pi_blocked_on_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.pi_blocked_on; }, 0xA18);
-    }
-
-    inline uint32_t task_pid_off() {
-        return symbol_u32([](const kernel_offsets &v) { return v.task.pid; }, 0x708);
-    }
-
-    inline uint32_t task_tgid_off() {
-        return symbol_u32([](const kernel_offsets &v) { return v.task.tgid; }, 0x70C);
-    }
-
-    inline uint32_t task_atomic_flags_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.atomic_flags; }, 0x6C8);
-    }
-
-    inline uint32_t task_real_cred_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.real_cred; }, 0x8F8);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.pi_blocked_on; }, "pi_blocked_on");
     }
 
     inline uint32_t task_cred_off() {
-        return symbol_u32([](const kernel_offsets &v) { return v.task.cred; }, 0x900);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.cred; }, "cred");
     }
 
     inline uint32_t task_comm_off() {
-        return symbol_u32([](const kernel_offsets &v) { return v.task.comm; }, 0x910);
-    }
-
-    inline uint32_t task_tasks_off() {
-        return symbol_u32([](const kernel_offsets &v) { return v.task.tasks; }, 0x638);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.comm; }, "comm");
     }
 
     inline uint32_t task_seccomp_off() {
-        return symbol_u32(
-            [](const kernel_offsets &v) { return v.task.seccomp; }, 0x9C8);
+        return require_task_offset(
+            [](const kernel_offsets &v) { return v.task.seccomp; }, "seccomp");
     }
 } // namespace ghostlock::profile
 

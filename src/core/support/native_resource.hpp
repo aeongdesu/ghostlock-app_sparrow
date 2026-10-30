@@ -173,7 +173,6 @@ namespace ghostlock::support {
         [[nodiscard]] bool joinable() const noexcept;
 
         [[nodiscard]] State state() const noexcept { return state_; }
-        [[nodiscard]] pthread_t native_handle() const noexcept { return thread_; }
 
     private:
         void detach_if_joinable() noexcept;

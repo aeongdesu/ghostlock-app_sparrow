@@ -6,6 +6,7 @@
 #include "route/route_policy.hpp"
 #include "session/exploit_session.hpp"
 #include "support/native_resource.hpp"
+#include "support/fatal_error.hpp"
 #include "kernel/target.h"
 #include "kernelsnitch/kernelsnitch.h"
 
@@ -29,7 +30,16 @@ namespace {
     }
 } // namespace
 
+namespace ghostlock::profile {
+    /* Defined here because the logging macros come from common.h. */
+    [[noreturn]] void fatal_missing_task_offset(const char *name) {
+        pr_error("profile is missing required task_struct offset: %s\n", name);
+        throw ghostlock::FatalError{};
+    }
+} // namespace ghostlock::profile
+
 namespace ghostlock::support {
+
     static const profile::kernel_offsets *profile_values(void) {
         return session::g_exploit_session.profile.values();
     }

@@ -41,9 +41,11 @@ namespace ghostlock::memory {
                    span_store64(waiter, 0x20, 0) &&
                    span_store64(waiter, 0x28, request.target);
         }
+        /* Value 0: no-child erase arm. NULL children, parent = target-8 with
+         * bit 0 clear (red), so no colour fixup runs. */
         return span_store64(waiter, 0x18, layout.parent) &&
-               span_store64(waiter, 0x20, layout.right) &&
-               span_store64(waiter, 0x28, layout.left);
+               span_store64(waiter, 0x20, 0) &&
+               span_store64(waiter, 0x28, 0);
     }
 
     bool encode_multicast_waiter(std::span<std::byte> buffer,

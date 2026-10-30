@@ -8,7 +8,7 @@ using namespace ghostlock;
 #include <type_traits>
 
 
-static_assert(ghostlock::kernel::KIMAGE_TEXT_BASE == 0xffffffc080000000ULL);
+static_assert(ghostlock::kernel::KIMAGE_TEXT_BASE == GHOSTLOCK_KIMAGE_TEXT_BASE);
 static_assert(ghostlock::kernel::MTK_VADDR_BASE == 0xffffffc000000000ULL);
 static_assert(ghostlock::kernel::P0_PAGE_OFFSET == 0xffffff8000000000ULL);
 static_assert(ghostlock::kernel::P0_PHYS_OFFSET == 0x80000000ULL);

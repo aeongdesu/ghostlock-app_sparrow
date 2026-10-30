@@ -56,12 +56,17 @@ OBJS := $(C_OBJS) $(CXX_OBJS)
 # Native interface and target headers also trigger a rebuild.
 HDRS := $(wildcard core/*.h core/*.hpp core/*/*.h core/*/*.hpp)
 
-# Device offsets are selected at runtime from uname -r.
-TARGET_CONFIG ?= kernel/target.h
+# Device offsets are selected at runtime from uname -r. The sparrow target is
+# the default for this branch; keep `kernel/target.h` for other device families.
+TARGET_CONFIG ?= kernel/target_sparrow.h
+EXTRA_CPPFLAGS ?=
+# Bionic defines PAGE_SIZE as a macro; the kernel constants must own that name.
+BIONIC_FLAGS := -D__BIONIC_NO_PAGE_SIZE_MACRO
 
 COMMON_FLAGS := -O2 -flto -Wall -Wextra -Wconversion -Wsign-conversion \
   -Wno-unused-parameter -Wno-sign-compare -Wno-unused-function \
-  -Icore -DTARGET_CONFIG_H=\"$(TARGET_CONFIG)\"
+  -Icore -DTARGET_CONFIG_H=\"$(TARGET_CONFIG)\" $(BIONIC_FLAGS) \
+  $(EXTRA_CPPFLAGS)
 CFLAGS := $(COMMON_FLAGS) -std=gnu11
 CXXFLAGS := $(COMMON_FLAGS) -std=c++23 -fno-rtti
 LDFLAGS := -fPIE -pie -pthread -flto -static-libstdc++
@@ -121,7 +126,8 @@ NATIVE_HOST_TESTS := \
   target_constants_test native_resource_test \
   profile_binary_test futex_hash_test number_parse_test \
   runtime_paths_test handoff_probe_test victim_context_test \
-  run_state_test address_space_test cpp_link_probe_test
+  run_state_test address_space_test cpp_link_probe_test \
+  task_offset_live_test
 
 native-host-tests: $(addprefix $(HOST_BUILD_DIR)/,$(NATIVE_HOST_TESTS))
 	@status=0; for test in $^; do $$test || status=1; done; exit $$status
@@ -152,7 +158,7 @@ HOST_ATTACK_DATAFLOW_SOURCES := \
   core/support/run_state.cpp
 
 HOST_ATTACK_DATAFLOW_INCLUDES := -Icore/tests/host/include -Icore/tests/host -Icore \
-  -DTARGET_CONFIG_H=\"$(TARGET_CONFIG)\"
+  -DTARGET_CONFIG_H=\"$(TARGET_CONFIG)\" $(BIONIC_FLAGS)
 
 .PHONY: host-attack-dataflow-test
 host-attack-dataflow-test: $(HOST_BUILD_DIR)/host_attack_dataflow_test
@@ -172,6 +178,7 @@ lint-tidy:
 	  $(NDK_ROOT)/toolchains/llvm/prebuilt/$(PREBUILT)/bin/clang-tidy "$$f" \
 	    --warnings-as-errors='*' -- \
 	    -std=c++23 -fno-rtti -Icore \
+	    $(BIONIC_FLAGS) \
 	    --target=aarch64-linux-android$(API) \
 	    --sysroot=$(NDK_ROOT)/toolchains/llvm/prebuilt/$(PREBUILT)/sysroot \
 	    -DTARGET_CONFIG_H=\"$(TARGET_CONFIG)\" || status=1; \
@@ -185,7 +192,16 @@ $(HOST_BUILD_DIR)/cpp_link_probe_test: core/tests/cpp_link_probe.cpp core/tests/
 
 $(HOST_BUILD_DIR)/target_constants_test: core/tests/target_constants_test.cpp core/kernel/target.h core/kernel/target_constants.hpp
 	@mkdir -p $(HOST_BUILD_DIR)
-	$(HOST_CXX) $(HOST_CXXFLAGS) -Icore core/tests/target_constants_test.cpp -o $@
+	$(HOST_CXX) $(HOST_CXXFLAGS) -Icore -DTARGET_CONFIG_H=\"$(TARGET_CONFIG)\" core/tests/target_constants_test.cpp -o $@
+
+$(HOST_BUILD_DIR)/task_offset_live_test: core/tests/task_offset_live_test.cpp \
+    core/session/exploit_session.cpp core/memory/heap_context.cpp \
+    core/support/native_resource.cpp
+	@mkdir -p $(HOST_BUILD_DIR)
+	$(HOST_CXX) $(HOST_CXXFLAGS) -pthread -Icore \
+	  -DTARGET_CONFIG_H=\"$(TARGET_CONFIG)\" $(BIONIC_FLAGS) \
+	  core/tests/task_offset_live_test.cpp core/session/exploit_session.cpp \
+	  core/memory/heap_context.cpp core/support/native_resource.cpp -o $@
 
 $(HOST_BUILD_DIR)/native_resource_test: core/tests/native_resource_test.cpp core/support/native_resource.cpp core/support/native_resource.hpp core/support/native_result.hpp
 	@mkdir -p $(HOST_BUILD_DIR)

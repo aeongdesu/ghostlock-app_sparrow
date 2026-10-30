@@ -7,9 +7,13 @@
 #include <optional>
 #include <type_traits>
 
+#ifndef GHOSTLOCK_KIMAGE_TEXT_BASE
+#define GHOSTLOCK_KIMAGE_TEXT_BASE 0xffffffc080000000ULL
+#endif
+
 namespace ghostlock::target {
     namespace address {
-        inline constexpr std::uintptr_t kImageTextBase = 0xffffffc080000000ULL;
+        inline constexpr std::uintptr_t kImageTextBase = GHOSTLOCK_KIMAGE_TEXT_BASE;
         inline constexpr std::uintptr_t kMtkVirtualBase = 0xffffffc000000000ULL;
         inline constexpr std::uintptr_t kPageOffset = 0xffffff8000000000ULL;
         inline constexpr std::uintptr_t kPhysicalOffset = 0x80000000ULL;
@@ -75,7 +79,7 @@ namespace ghostlock::target {
     static_assert(sizeof(KernelAddress<ImageAddressDomain>) == sizeof(std::uintptr_t));
     static_assert(alignof(KernelAddress<ImageAddressDomain>) == alignof(std::uintptr_t));
 
-    static_assert(address::kImageTextBase == 0xffffffc080000000ULL);
+    static_assert(address::kImageTextBase == GHOSTLOCK_KIMAGE_TEXT_BASE);
     static_assert(address::kMtkVirtualBase == 0xffffffc000000000ULL);
     static_assert(address::kPageOffset == address::kDirectMapBase);
     static_assert(address::kKernelSnitchIdentityStart == address::kDirectMapBase);

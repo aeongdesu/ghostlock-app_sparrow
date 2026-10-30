@@ -6,9 +6,11 @@ on:
       - "**.md"
     branches:
       - main
+      - sparrow
   pull_request:
     branches:
       - main
+      - sparrow
   workflow_dispatch:
 
 concurrency:
@@ -32,7 +34,7 @@ jobs:
         uses: actions/setup-java@v6
         with:
           java-version: 21
-          distribution: zulu
+          distribution: temurin
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -74,7 +76,7 @@ jobs:
         run: rustup toolchain link ondk "${{ runner.temp }}/ondk/toolchains/rust"
 
       - name: Decode Android signing key
-        if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+        if: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sparrow') }}
         run: echo ${{ secrets.SIGNING_KEY }} | base64 -d > keystore.jks
 
       - name: Build Ghostlock binary
@@ -235,7 +237,7 @@ jobs:
     name: Pre-release
     needs: [build-apk, build-extractor-macos, build-extractor-windows]
     runs-on: ubuntu-latest
-    if: ${{ success() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && github.ref_type != 'tag' }}
+    if: ${{ success() && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sparrow') && github.ref_type != 'tag' }}
     permissions:
       contents: write
     steps:
@@ -329,7 +331,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Pre-release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: pre-release
           target_commitish: ${{ github.sha }}
@@ -343,7 +345,7 @@ jobs:
   post_telegram:
     needs: [build-apk, build-extractor-macos, build-extractor-windows]
     runs-on: ubuntu-latest
-    if: ${{ success() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && github.ref_type != 'tag' }}
+    if: ${{ success() && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sparrow') && github.ref_type != 'tag' }}
     steps:
       - uses: actions/checkout@v7
         with:

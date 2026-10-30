@@ -307,11 +307,6 @@ namespace ghostlock::profile {
             return or_default(loaded_ ? values_.misc.mm_struct_sz.value_or(0) : 0, fallback);
         }
 
-        [[nodiscard]] uint64_t image(uint64_t offset, uint64_t image_base,
-                                     uint64_t fallback_offset) const noexcept {
-            return image_base + ((loaded_ && offset) ? offset : fallback_offset);
-        }
-
         static TargetProfile from(const struct kernel_offsets *values) {
             return values ? TargetProfile(*values) : TargetProfile();
         }

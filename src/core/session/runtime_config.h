@@ -34,6 +34,9 @@ namespace ghostlock::config {
         /* Merge the profile's recommended CPU pair (validated). */
         int32_t apply_profile(const ghostlock::profile::TargetProfile *profile);
 
+        /* Returns -1 when no usable pair remains. */
+        int32_t revalidate_cpus();
+
         void log() const;
     };
 

@@ -179,15 +179,6 @@ namespace ghostlock::route {
         return selected;
     }
 
-    /* Visit the resolved policy so a call site can branch on compile-time
-     * capabilities with `if constexpr` instead of on the route kind. Used by
-     * the stage hooks, which run outside the PI window. */
-    template<class Fn>
-    constexpr decltype(auto) with_route_policy(
-        const profile::TargetProfile &profile, Fn &&fn) {
-        return std::visit(std::forward<Fn>(fn), make_route_policy(profile));
-    }
-
     /* Read one compile-time capability of the resolved policy using a direct
      * compare/branch chain (no std::visit), safe for the PI window where an
      * indirect dispatch must not enter (route_lifecycle.hpp). */

