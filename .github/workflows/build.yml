@@ -77,7 +77,7 @@ jobs:
 
       - name: Decode Android signing key
         if: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sparrow') }}
-        run: echo ${{ secrets.SIGNING_KEY }} | base64 -d > keystore.jks
+        run: echo ${{ secrets.SIGNING_KEY }} | base64 -d > keystore.p12
 
       - name: Build Ghostlock binary
         run: |
@@ -91,7 +91,7 @@ jobs:
           export ONDK_HOME="${{ runner.temp }}/ondk"
           export ANDROID_NDK_HOME="$ONDK_HOME"
           export NDK_ROOT="$ONDK_HOME"
-          export KEYSTORE_PATH="../keystore.jks"
+          export KEYSTORE_PATH="../keystore.p12"
           export KEYSTORE_PASS="${{ secrets.KEYSTORE_PASSWORD }}"
           export KEY_ALIAS="${{ secrets.KEY_ALIAS }}"
           export KEY_PASSWORD="${{ secrets.KEY_PASSWORD }}"

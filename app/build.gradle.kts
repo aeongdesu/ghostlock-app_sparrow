@@ -91,6 +91,7 @@ android {
     if (keystoreFile != null) {
         signingConfigs {
             create("release") {
+                storeType = "PKCS12"
                 storeFile = keystoreFile
                 storePassword = keystorePwd
                 keyAlias = alias
