@@ -361,3 +361,15 @@ jobs:
             release-files/ghostlock-extract-*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prune stale assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view pre-release --json assets \
+            --jq '.assets[].name' | while read -r name; do
+            case "$name" in
+              GhostLock-release.apk|ghostlock|GhostLock-kernel-profiles.zip|ghostlock-extract-*) ;;
+              *) gh release delete-asset pre-release "$name" -y ;;
+            esac
+          done
