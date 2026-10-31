@@ -292,7 +292,7 @@ jobs:
               checksums = f.read().strip()
 
           lines = [
-              "### GhostLock Pre-release",
+              "### GhostLock",
               "",
               f"- **Version**: `v{version}` (`{commit_count}`)",
               f"- **Commit**: [`{short_hash}`](https://github.com/{repo}/commit/{sha})",
@@ -346,14 +346,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Pre-release
+      - name: Upload Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: pre-release
           target_commitish: ${{ github.sha }}
-          name: GhostLock Pre-release
+          name: GhostLock
           body_path: release-notes.md
-          prerelease: true
+          prerelease: false
+          make_latest: true
           files: |
             release-files/GhostLock-release.apk
             release-files/ghostlock
