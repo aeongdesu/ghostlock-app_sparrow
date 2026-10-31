@@ -233,8 +233,8 @@ jobs:
           path: tools/extract_rs/bin/ghostlock-extract-windows-x86_64.exe
           archive: false
 
-  prerelease:
-    name: Pre-release
+  release:
+    name: Release
     needs: [build-apk, build-extractor-macos, build-extractor-windows]
     runs-on: ubuntu-latest
     if: ${{ success() && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sparrow') && github.ref_type != 'tag' }}
@@ -340,16 +340,16 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f pre-release
-          git push -f origin pre-release
-          gh release edit pre-release --target ${{ github.sha }} 2>/dev/null || true
+          git tag -f latest
+          git push -f origin latest
+          gh release edit latest --target ${{ github.sha }} 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: pre-release
+          tag_name: latest
           target_commitish: ${{ github.sha }}
           name: GhostLock
           body_path: release-notes.md
@@ -367,10 +367,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release view pre-release --json assets \
+          gh release view latest --json assets \
             --jq '.assets[].name' | while read -r name; do
             case "$name" in
               GhostLock-release.apk|ghostlock|GhostLock-kernel-profiles.zip|ghostlock-extract-*) ;;
-              *) gh release delete-asset pre-release "$name" -y ;;
+              *) gh release delete-asset latest "$name" -y ;;
             esac
           done
